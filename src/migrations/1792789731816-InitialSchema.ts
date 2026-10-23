@@ -1,0 +1,60 @@
+import { MigrationInterface, QueryRunner } from "typeorm";
+
+export class InitialSchema1792789731816 implements MigrationInterface {
+    name = 'InitialSchema1792789731816'
+
+    public async up(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`CREATE TABLE \`sync_runs\` (\`id\` bigint UNSIGNED NOT NULL AUTO_INCREMENT, \`integration_id\` bigint UNSIGNED NOT NULL, \`data_source_id\` bigint UNSIGNED NULL, \`started_at\` datetime NOT NULL, \`finished_at\` datetime NULL, \`status\` enum ('running', 'success', 'partial', 'failed') NOT NULL DEFAULT 'running', \`records_read\` int UNSIGNED NOT NULL DEFAULT '0', \`records_inserted\` int UNSIGNED NOT NULL DEFAULT '0', \`records_updated\` int UNSIGNED NOT NULL DEFAULT '0', \`error_summary\` text NULL, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`integrations\` (\`id\` bigint UNSIGNED NOT NULL AUTO_INCREMENT, \`provider\` enum ('google_ads', 'ga4', 'search_console') NOT NULL, \`display_name\` varchar(120) NOT NULL, \`status\` enum ('pending', 'connected', 'error', 'disabled') NOT NULL DEFAULT 'pending', \`external_account_email\` varchar(190) NULL, \`access_token_encrypted\` text NULL, \`refresh_token_encrypted\` text NULL, \`token_expires_at\` datetime NULL, \`scopes\` text NULL, \`connected_at\` datetime NULL, \`last_sync_at\` datetime NULL, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`projects\` (\`id\` bigint UNSIGNED NOT NULL AUTO_INCREMENT, \`name\` varchar(150) NOT NULL, \`slug\` varchar(180) NOT NULL, \`description\` text NULL, \`status\` enum ('active', 'inactive', 'completed') NOT NULL DEFAULT 'active', \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), UNIQUE INDEX \`IDX_96e045ab8b0271e5f5a91eae1e\` (\`slug\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`pages\` (\`id\` bigint UNSIGNED NOT NULL AUTO_INCREMENT, \`project_id\` bigint UNSIGNED NULL, \`canonical_url\` varchar(2048) NOT NULL, \`url_hash\` char(64) NOT NULL, \`path\` varchar(1024) NOT NULL, \`title\` varchar(255) NULL, \`page_type\` enum ('landing', 'project', 'contact', 'general', 'other') NOT NULL DEFAULT 'other', \`is_active\` tinyint NOT NULL DEFAULT 1, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), UNIQUE INDEX \`uq_page_url_hash\` (\`url_hash\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`web_daily_metrics\` (\`id\` bigint UNSIGNED NOT NULL AUTO_INCREMENT, \`data_source_id\` bigint UNSIGNED NOT NULL, \`metric_date\` date NOT NULL, \`page_id\` bigint UNSIGNED NULL, \`dimension_key\` char(64) NOT NULL, \`source\` varchar(150) NOT NULL DEFAULT 'unknown', \`medium\` varchar(150) NOT NULL DEFAULT 'unknown', \`campaign_name\` varchar(255) NOT NULL DEFAULT 'unknown', \`device_category\` varchar(40) NOT NULL DEFAULT 'unknown', \`sessions\` bigint UNSIGNED NULL, \`total_users\` bigint UNSIGNED NULL, \`engaged_sessions\` bigint UNSIGNED NULL, \`views\` bigint UNSIGNED NULL, \`engagement_rate\` decimal(9,6) NULL, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), UNIQUE INDEX \`uq_web_metric_dimensions\` (\`data_source_id\`, \`metric_date\`, \`dimension_key\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`seo_daily_metrics\` (\`id\` bigint UNSIGNED NOT NULL AUTO_INCREMENT, \`data_source_id\` bigint UNSIGNED NOT NULL, \`page_id\` bigint UNSIGNED NULL, \`metric_date\` date NOT NULL, \`page_key_hash\` char(64) NOT NULL, \`clicks\` bigint UNSIGNED NOT NULL DEFAULT '0', \`impressions\` bigint UNSIGNED NOT NULL DEFAULT '0', \`ctr\` decimal(9,6) NULL, \`average_position\` decimal(10,4) NULL, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), UNIQUE INDEX \`uq_seo_metric_page_day\` (\`data_source_id\`, \`metric_date\`, \`page_key_hash\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`data_sources\` (\`id\` bigint UNSIGNED NOT NULL AUTO_INCREMENT, \`integration_id\` bigint UNSIGNED NOT NULL, \`resource_type\` enum ('ads_account', 'ga4_property', 'search_console_site') NOT NULL, \`external_resource_id\` varchar(255) NOT NULL, \`resource_name\` varchar(255) NOT NULL, \`currency_code\` char(3) NULL, \`timezone\` varchar(60) NULL, \`is_active\` tinyint NOT NULL DEFAULT 1, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), UNIQUE INDEX \`uq_data_source_external_resource\` (\`integration_id\`, \`resource_type\`, \`external_resource_id\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`campaigns\` (\`id\` bigint UNSIGNED NOT NULL AUTO_INCREMENT, \`data_source_id\` bigint UNSIGNED NOT NULL, \`external_campaign_id\` varchar(100) NOT NULL, \`name\` varchar(255) NOT NULL, \`status\` varchar(30) NULL, \`campaign_type\` varchar(50) NULL, \`first_seen_at\` datetime NULL, \`last_seen_at\` datetime NULL, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), UNIQUE INDEX \`uq_campaign_external_id\` (\`data_source_id\`, \`external_campaign_id\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`ad_daily_metrics\` (\`id\` bigint UNSIGNED NOT NULL AUTO_INCREMENT, \`campaign_id\` bigint UNSIGNED NOT NULL, \`metric_date\` date NOT NULL, \`impressions\` bigint UNSIGNED NOT NULL DEFAULT '0', \`clicks\` bigint UNSIGNED NOT NULL DEFAULT '0', \`cost_amount\` decimal(18,6) NOT NULL, \`conversions\` decimal(18,4) NULL, \`currency_code\` char(3) NOT NULL, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), UNIQUE INDEX \`uq_ad_metric_campaign_date\` (\`campaign_id\`, \`metric_date\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`CREATE TABLE \`users\` (\`id\` bigint UNSIGNED NOT NULL AUTO_INCREMENT, \`name\` varchar(120) NOT NULL, \`email\` varchar(190) NOT NULL, \`password_hash\` varchar(255) NOT NULL, \`is_active\` tinyint NOT NULL DEFAULT 1, \`created_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6), \`updated_at\` datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6), UNIQUE INDEX \`IDX_97672ac88f789774dd47f7c8be\` (\`email\`), PRIMARY KEY (\`id\`)) ENGINE=InnoDB`);
+        await queryRunner.query(`ALTER TABLE \`sync_runs\` ADD CONSTRAINT \`FK_69c8434b2fb511c206dc93961e9\` FOREIGN KEY (\`integration_id\`) REFERENCES \`integrations\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`sync_runs\` ADD CONSTRAINT \`FK_f9159c0305e14f9a5b4faad84ce\` FOREIGN KEY (\`data_source_id\`) REFERENCES \`data_sources\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`pages\` ADD CONSTRAINT \`FK_25bc849b1383b42eb02bd4c58a6\` FOREIGN KEY (\`project_id\`) REFERENCES \`projects\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`web_daily_metrics\` ADD CONSTRAINT \`FK_979f1420dfd87c458c85b881d60\` FOREIGN KEY (\`data_source_id\`) REFERENCES \`data_sources\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`web_daily_metrics\` ADD CONSTRAINT \`FK_f5172bab75cde40813e32b82378\` FOREIGN KEY (\`page_id\`) REFERENCES \`pages\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`seo_daily_metrics\` ADD CONSTRAINT \`FK_f4eb947cda5a87ede6b3948d5f1\` FOREIGN KEY (\`data_source_id\`) REFERENCES \`data_sources\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`seo_daily_metrics\` ADD CONSTRAINT \`FK_e6573aaad9b825867ba61afd73b\` FOREIGN KEY (\`page_id\`) REFERENCES \`pages\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`data_sources\` ADD CONSTRAINT \`FK_34ad2d84e0d4c32d8d640996c53\` FOREIGN KEY (\`integration_id\`) REFERENCES \`integrations\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`campaigns\` ADD CONSTRAINT \`FK_d9102a1c4f89710bc6837a22193\` FOREIGN KEY (\`data_source_id\`) REFERENCES \`data_sources\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE \`ad_daily_metrics\` ADD CONSTRAINT \`FK_0a083e6579bcf1c6f5e5a3d7eea\` FOREIGN KEY (\`campaign_id\`) REFERENCES \`campaigns\`(\`id\`) ON DELETE RESTRICT ON UPDATE NO ACTION`);
+    }
+
+    public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE \`ad_daily_metrics\` DROP FOREIGN KEY \`FK_0a083e6579bcf1c6f5e5a3d7eea\``);
+        await queryRunner.query(`ALTER TABLE \`campaigns\` DROP FOREIGN KEY \`FK_d9102a1c4f89710bc6837a22193\``);
+        await queryRunner.query(`ALTER TABLE \`data_sources\` DROP FOREIGN KEY \`FK_34ad2d84e0d4c32d8d640996c53\``);
+        await queryRunner.query(`ALTER TABLE \`seo_daily_metrics\` DROP FOREIGN KEY \`FK_e6573aaad9b825867ba61afd73b\``);
+        await queryRunner.query(`ALTER TABLE \`seo_daily_metrics\` DROP FOREIGN KEY \`FK_f4eb947cda5a87ede6b3948d5f1\``);
+        await queryRunner.query(`ALTER TABLE \`web_daily_metrics\` DROP FOREIGN KEY \`FK_f5172bab75cde40813e32b82378\``);
+        await queryRunner.query(`ALTER TABLE \`web_daily_metrics\` DROP FOREIGN KEY \`FK_979f1420dfd87c458c85b881d60\``);
+        await queryRunner.query(`ALTER TABLE \`pages\` DROP FOREIGN KEY \`FK_25bc849b1383b42eb02bd4c58a6\``);
+        await queryRunner.query(`ALTER TABLE \`sync_runs\` DROP FOREIGN KEY \`FK_f9159c0305e14f9a5b4faad84ce\``);
+        await queryRunner.query(`ALTER TABLE \`sync_runs\` DROP FOREIGN KEY \`FK_69c8434b2fb511c206dc93961e9\``);
+        await queryRunner.query(`DROP INDEX \`IDX_97672ac88f789774dd47f7c8be\` ON \`users\``);
+        await queryRunner.query(`DROP TABLE \`users\``);
+        await queryRunner.query(`DROP INDEX \`uq_ad_metric_campaign_date\` ON \`ad_daily_metrics\``);
+        await queryRunner.query(`DROP TABLE \`ad_daily_metrics\``);
+        await queryRunner.query(`DROP INDEX \`uq_campaign_external_id\` ON \`campaigns\``);
+        await queryRunner.query(`DROP TABLE \`campaigns\``);
+        await queryRunner.query(`DROP INDEX \`uq_data_source_external_resource\` ON \`data_sources\``);
+        await queryRunner.query(`DROP TABLE \`data_sources\``);
+        await queryRunner.query(`DROP INDEX \`uq_seo_metric_page_day\` ON \`seo_daily_metrics\``);
+        await queryRunner.query(`DROP TABLE \`seo_daily_metrics\``);
+        await queryRunner.query(`DROP INDEX \`uq_web_metric_dimensions\` ON \`web_daily_metrics\``);
+        await queryRunner.query(`DROP TABLE \`web_daily_metrics\``);
+        await queryRunner.query(`DROP INDEX \`uq_page_url_hash\` ON \`pages\``);
+        await queryRunner.query(`DROP TABLE \`pages\``);
+        await queryRunner.query(`DROP INDEX \`IDX_96e045ab8b0271e5f5a91eae1e\` ON \`projects\``);
+        await queryRunner.query(`DROP TABLE \`projects\``);
+        await queryRunner.query(`DROP TABLE \`integrations\``);
+        await queryRunner.query(`DROP TABLE \`sync_runs\``);
+    }
+
+}
